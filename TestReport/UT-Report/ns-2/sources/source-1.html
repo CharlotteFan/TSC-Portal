@@ -1,0 +1,179 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > TransactionController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.server.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: TransactionController (com.example.server.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TransactionController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (10/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (15/15)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.server.controller;
+&nbsp;
+&nbsp;import com.example.server.model.data.Transaction;
+&nbsp;import com.example.server.model.vo.TransactionSearchVO;
+&nbsp;import com.example.server.model.vo.TransactionVO;
+&nbsp;import com.example.server.service.TransactionService;
+&nbsp;import com.example.server.util.Constants;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.data.domain.Page;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;import com.example.server.model.ApiResponse;
+&nbsp;
+<b class="fc">&nbsp;@Slf4j</b>
+&nbsp;@RestController()
+&nbsp;@RequestMapping(&quot;/transaction&quot;)
+&nbsp;public class TransactionController {
+&nbsp;
+&nbsp;    private final TransactionService transactionService;
+&nbsp;
+<b class="fc">&nbsp;    public TransactionController(TransactionService transactionService) {</b>
+<b class="fc">&nbsp;        this.transactionService = transactionService;</b>
+<b class="fc">&nbsp;        log.info(&quot;TransactionController initialized with TransactionService&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // create a transaction
+&nbsp;    @PostMapping(&quot;/create&quot;)
+&nbsp;    public ApiResponse&lt;TransactionVO&gt; createTransaction(@RequestBody TransactionVO transaction,
+&nbsp;                                                      @RequestParam String userId) {
+<b class="fc">&nbsp;        return ApiResponse.success(transactionService.createTransaction(transaction, Constants.TX_CONTEXT_CREATE, userId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PutMapping(&quot;/update&quot;)
+&nbsp;    public ApiResponse&lt;Integer&gt; updateTransaction(@RequestBody TransactionVO transaction,
+&nbsp;                                                      @RequestParam String userId) {
+<b class="fc">&nbsp;        return ApiResponse.success(transactionService.updateTransactionBasicInfo(transaction, Constants.TX_CONTEXT_UPDATE, userId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/approve&quot;)
+&nbsp;    public ApiResponse&lt;Integer&gt; approveTransaction(@RequestBody TransactionVO transaction,
+&nbsp;                                                       @RequestParam String userId) {
+<b class="fc">&nbsp;        Integer approved = transactionService.handleTransaction(transaction, Constants.TX_CONTEXT_APPROVE , userId);</b>
+<b class="fc">&nbsp;        return ApiResponse.success(approved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/reject&quot;)
+&nbsp;    public ApiResponse&lt;Integer&gt; rejectTransaction(@RequestBody TransactionVO transaction,
+&nbsp;                                                         @RequestParam String userId) {
+<b class="fc">&nbsp;        Integer approved = transactionService.handleTransaction(transaction, Constants.TX_CONTEXT_REJECT , userId);</b>
+<b class="fc">&nbsp;        return ApiResponse.success(approved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/cancel&quot;)
+&nbsp;    public ApiResponse&lt;Integer&gt; cancelTransaction(@RequestBody TransactionVO transaction,
+&nbsp;                                                         @RequestParam String userId) {
+<b class="fc">&nbsp;        Integer approved = transactionService.handleTransaction(transaction, Constants.TX_CONTEXT_CANCEL , userId);</b>
+<b class="fc">&nbsp;        return ApiResponse.success(approved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/{id}&quot;)
+&nbsp;    public ApiResponse&lt;TransactionVO&gt; getTransactionById(@PathVariable Long id,
+&nbsp;                                                       @RequestParam String userId) {
+<b class="fc">&nbsp;        return ApiResponse.success(transactionService.getTransactionById(id, userId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @DeleteMapping(&quot;/{id}&quot;)
+&nbsp;    public ApiResponse&lt;Boolean&gt; deleteTransaction(@PathVariable Long id,
+&nbsp;                                                  @RequestParam String userId) {
+<b class="fc">&nbsp;        return ApiResponse.success(transactionService.deleteTransaction(id, userId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/search&quot;)
+&nbsp;    public Page&lt;Transaction&gt; searchTransaction(@RequestBody TransactionSearchVO searchVO) {
+<b class="fc">&nbsp;        return transactionService.searchTransaction(searchVO);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-06-28 21:35</div>
+</div>
+</body>
+</html>

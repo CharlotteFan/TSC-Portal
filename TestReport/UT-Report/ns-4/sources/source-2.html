@@ -1,0 +1,134 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ExecutionCode</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.server.model</a>
+</div>
+
+<h1>Coverage Summary for Class: ExecutionCode (com.example.server.model)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ExecutionCode</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (14/14)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.server.model;
+&nbsp;
+&nbsp;import lombok.Getter;
+&nbsp;import lombok.Setter;
+&nbsp;
+<b class="fc">&nbsp;@Getter</b>
+&nbsp;public enum ExecutionCode {
+<b class="fc">&nbsp;    INVALID_PARAMETER(4001, &quot;Invalid parameter&quot;),</b>
+<b class="fc">&nbsp;    NOT_FOUND(4004, &quot;Resource not found&quot;),</b>
+<b class="fc">&nbsp;    UNAUTHORIZED(4003, &quot;Unauthorized operation&quot;),</b>
+<b class="fc">&nbsp;    BUSINESS_ERROR(4000, &quot;Business error&quot;),</b>
+<b class="fc">&nbsp;    SYSTEM_ERROR(5000, &quot;System error&quot;),</b>
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;    SUCCESS(200, &quot;Success&quot;),;</b>
+&nbsp;
+&nbsp;
+<b class="fc">&nbsp;    private final int code;</b>
+<b class="fc">&nbsp;    private String message;</b>
+&nbsp;
+<b class="fc">&nbsp;    ExecutionCode(int code, String message) {</b>
+<b class="fc">&nbsp;        this.code = code;</b>
+<b class="fc">&nbsp;        this.message = message;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public ExecutionCode withProperty(String property) {
+<b class="fc">&nbsp;        this.message = this.message + &quot; - &quot; + property;</b>
+<b class="fc">&nbsp;        return this;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-06-28 21:35</div>
+</div>
+</body>
+</html>

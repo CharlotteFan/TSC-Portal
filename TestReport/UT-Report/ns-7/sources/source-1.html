@@ -1,0 +1,415 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > TransactionService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.example.server.service</a>
+</div>
+
+<h1>Coverage Summary for Class: TransactionService (com.example.server.service)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TransactionService</td>
+<td class="coverageStat">
+  <span class="percent">
+    92.3%
+  </span>
+  <span class="absValue">
+    (12/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    44.7%
+  </span>
+  <span class="absValue">
+    (46/103)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    70%
+  </span>
+  <span class="absValue">
+    (98/140)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TransactionService$$SpringCGLIB$$0</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    92.3%
+  </span>
+  <span class="absValue">
+    (12/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    44.7%
+  </span>
+  <span class="absValue">
+    (46/103)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    70%
+  </span>
+  <span class="absValue">
+    (98/140)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.example.server.service;
+&nbsp;
+&nbsp;import com.example.server.exception.BusinessException;
+&nbsp;import com.example.server.model.ExecutionCode;
+&nbsp;import com.example.server.model.vo.TransactionSearchVO;
+&nbsp;import com.example.server.model.data.Transaction;
+&nbsp;import com.example.server.model.vo.TransactionVO;
+&nbsp;import com.example.server.repository.TransactionRepository;
+&nbsp;import com.example.server.util.Constants;
+&nbsp;import jakarta.persistence.criteria.*;
+&nbsp;import jakarta.persistence.criteria.CriteriaQuery;
+&nbsp;import jakarta.persistence.criteria.Root;
+&nbsp;import jakarta.transaction.Transactional;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.BeanUtils;
+&nbsp;import org.springframework.cache.annotation.CacheEvict;
+&nbsp;import org.springframework.cache.annotation.Cacheable;
+&nbsp;import org.springframework.data.domain.Page;
+&nbsp;import org.springframework.data.domain.PageRequest;
+&nbsp;import org.springframework.data.domain.Pageable;
+&nbsp;import org.springframework.data.domain.Sort;
+&nbsp;import org.springframework.data.jpa.domain.Specification;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;@Slf4j</b>
+&nbsp;public class TransactionService {
+&nbsp;
+&nbsp;    // This service will handle transaction-related operations
+&nbsp;    private final TransactionRepository transactionRepository;
+&nbsp;
+<b class="fc">&nbsp;    public TransactionService(TransactionRepository transactionRepository) {</b>
+<b class="fc">&nbsp;        this.transactionRepository = transactionRepository;</b>
+<b class="fc">&nbsp;        log.info(&quot;TransactionService initialized with TransactionRepository&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional
+&nbsp;    @Cacheable(value = &quot;transaction&quot;, key = &quot;#transactionId&quot;)
+&nbsp;    public TransactionVO getTransactionById(Long transactionId, String userId) {
+&nbsp;        try {
+<b class="fc">&nbsp;            Transaction transaction = transactionRepository.findById(transactionId)</b>
+<b class="fc">&nbsp;                    .orElseThrow(() -&gt; new BusinessException(ExecutionCode.NOT_FOUND));</b>
+&nbsp;
+<b class="fc">&nbsp;            TransactionVO transactionVO = new TransactionVO();</b>
+<b class="fc">&nbsp;            BeanUtils.copyProperties(transaction, transactionVO);</b>
+<b class="fc">&nbsp;            log.info(&quot;Transaction detail of &quot; + transactionId + &quot; is retrieved successfully for user: &quot; + userId);</b>
+<b class="fc">&nbsp;            return transactionVO;</b>
+&nbsp;        } catch (Exception e) {
+<b class="fc">&nbsp;            log.error(&quot;Failed to retrieve transaction with id: {}&quot;, transactionId, e);</b>
+&nbsp;            throw e;
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional
+&nbsp;    public Boolean deleteTransaction(Long transactionId, String userId) {
+<b class="fc">&nbsp;        Transaction transaction = transactionRepository.findById(transactionId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new BusinessException(ExecutionCode.NOT_FOUND));</b>
+&nbsp;
+<b class="fc">&nbsp;        transactionRepository.deleteById(transaction.getId());</b>
+<b class="fc">&nbsp;        log.info(&quot;Transaction &quot; + transactionId + &quot;gets deleted by user: &quot; + userId);</b>
+&nbsp;
+<b class="fc">&nbsp;        return true;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    //to-do search transaction with criteria and pagination
+&nbsp;    @Transactional
+&nbsp;    public Page&lt;Transaction&gt; searchTransaction(TransactionSearchVO transactionSearchVO) {
+&nbsp;        // build search criteria based on the TransactionSearchVO
+<b class="fc">&nbsp;        Specification&lt;Transaction&gt; specification = buildTransactionSearchSpecification(transactionSearchVO);</b>
+&nbsp;
+<b class="fc">&nbsp;        String sortBy = transactionSearchVO.getSortBy();</b>
+<b class="fc">&nbsp;        Sort.Order order = Sort.Order.desc(&quot;id&quot;); // Default sort order</b>
+&nbsp;
+<b class="pc">&nbsp;        if (sortBy == null || sortBy.isEmpty() || &quot;id&quot;.equalsIgnoreCase(sortBy)) {</b>
+<b class="fc">&nbsp;            order = new Sort.Order(Sort.Direction.DESC, &quot;id&quot;);</b>
+<b class="fc">&nbsp;        } else if (isValidColumn(sortBy)) {</b>
+<b class="fc">&nbsp;            order = new Sort.Order(Sort.Direction.DESC, sortBy);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Pageable transactionPage = PageRequest.of(</b>
+<b class="fc">&nbsp;                transactionSearchVO.getPage(),</b>
+<b class="fc">&nbsp;                transactionSearchVO.getPageSize(),</b>
+<b class="fc">&nbsp;                Sort.by(order)</b>
+&nbsp;        );
+<b class="fc">&nbsp;        return transactionRepository.findAll(specification, transactionPage);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional
+&nbsp;    @CacheEvict(value = &quot;transaction&quot;, key = &quot;#transactionVO.id&quot;)
+&nbsp;    public Integer handleTransaction(TransactionVO transactionVO, String context, String userId) {
+&nbsp;        // Validate the transaction before adding
+<b class="fc">&nbsp;        ExecutionCode validation = validateTransaction(transactionVO, context, userId);</b>
+<b class="fc">&nbsp;        if (ExecutionCode.SUCCESS.getCode() != validation.getCode()) {</b>
+<b class="fc">&nbsp;            log.error(&quot;Transaction validation failed for {} operation by user {}&quot;, context, userId);</b>
+<b class="fc">&nbsp;            throw new BusinessException(validation);</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        String status = switch (context) {</b>
+<b class="fc">&nbsp;            case Constants.TX_CONTEXT_APPROVE -&gt; Constants.TX_STATUS_APPROVED;</b>
+<b class="nc">&nbsp;            case Constants.TX_CONTEXT_CANCEL -&gt; Constants.TX_STATUS_CANCELLED;</b>
+<b class="nc">&nbsp;            case Constants.TX_CONTEXT_REJECT -&gt; Constants.TX_STATUS_REJECTED;</b>
+&nbsp;            default -&gt; {
+<b class="nc">&nbsp;                log.error(&quot;Invalid context for transaction handling: {}&quot;, context);</b>
+<b class="fc">&nbsp;                throw new BusinessException(ExecutionCode.INVALID_PARAMETER);</b>
+&nbsp;            }
+&nbsp;        };
+&nbsp;
+<b class="fc">&nbsp;        return transactionRepository.updateTransactionStatusById(transactionVO.getId(), status, LocalDateTime.now());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional
+&nbsp;    public TransactionVO createTransaction(TransactionVO transactionVO, String context, String userId) {
+<b class="fc">&nbsp;        ExecutionCode validation = validateTransaction(transactionVO, context, userId);</b>
+<b class="fc">&nbsp;        if (ExecutionCode.SUCCESS.getCode() != validation.getCode()) {</b>
+<b class="fc">&nbsp;            log.error(&quot;Transaction validation failed for {} operation by user {}&quot;, context, userId);</b>
+<b class="fc">&nbsp;            throw new BusinessException(validation);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Transaction toCreate = new Transaction();</b>
+<b class="fc">&nbsp;        BeanUtils.copyProperties(transactionVO, toCreate);</b>
+&nbsp;
+<b class="fc">&nbsp;        toCreate.setLastUpdated(LocalDateTime.now());</b>
+<b class="fc">&nbsp;        toCreate.setSubmittedBy(userId);</b>
+<b class="fc">&nbsp;        toCreate.setSubmittedAt(LocalDateTime.now());</b>
+<b class="fc">&nbsp;        toCreate.setStatus(Constants.TX_STATUS_SUBMITTED);</b>
+&nbsp;
+<b class="fc">&nbsp;        Transaction newTransaction = transactionRepository.save(toCreate);</b>
+&nbsp;
+<b class="fc">&nbsp;        TransactionVO created = new TransactionVO();</b>
+<b class="fc">&nbsp;        BeanUtils.copyProperties(newTransaction, created);</b>
+&nbsp;
+<b class="fc">&nbsp;        log.info(&quot;Transaction updated successfully by user: {}&quot;, userId);</b>
+<b class="fc">&nbsp;        return created;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional
+&nbsp;    @CacheEvict(value = &quot;transaction&quot;, key = &quot;#transactionVO.id&quot;)
+&nbsp;    public Integer updateTransactionBasicInfo(TransactionVO transactionVO, String context, String userId) {
+<b class="fc">&nbsp;        ExecutionCode validation = validateTransaction(transactionVO, context, userId);</b>
+<b class="fc">&nbsp;        if (ExecutionCode.SUCCESS.getCode() != validation.getCode()) {</b>
+<b class="fc">&nbsp;            log.error(&quot;Transaction validation failed for {} operation by user {}&quot;, context, userId);</b>
+<b class="fc">&nbsp;            throw new BusinessException(validation);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        int updateNum = transactionRepository.updateTransactionBasicInfoById(transactionVO.getId(),</b>
+<b class="fc">&nbsp;                transactionVO.getType(), transactionVO.getAmount(), transactionVO.getTransactionDate(),</b>
+<b class="fc">&nbsp;                transactionVO.getTransactionDescription(), transactionVO.getDebitAccount(),</b>
+<b class="fc">&nbsp;                transactionVO.getCreditAccount(), transactionVO.getCurrency(), LocalDateTime.now());</b>
+&nbsp;
+<b class="fc">&nbsp;        log.info(&quot;Transaction updated successfully by user: {}&quot;, userId);</b>
+<b class="fc">&nbsp;        return updateNum;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private ExecutionCode validateTransaction(TransactionVO transaction, String context, String userId) {
+<b class="pc">&nbsp;        if (context == null || context.isEmpty()) {</b>
+<b class="nc">&nbsp;            log.error(&quot;Operation context is null or empty&quot;);</b>
+<b class="nc">&nbsp;            return ExecutionCode.INVALID_PARAMETER;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (Constants.TX_CONTEXT_CREATE.equals(context)) {</b>
+<b class="fc">&nbsp;            ExecutionCode validator = validateTransactionProperties(transaction, userId);</b>
+<b class="fc">&nbsp;            if (ExecutionCode.SUCCESS.getCode() != validator.getCode()) {</b>
+<b class="fc">&nbsp;                log.error(&quot;Transaction properties validation failed: {}&quot;, validator.getMessage());</b>
+<b class="fc">&nbsp;                return validator;</b>
+&nbsp;            }
+<b class="pc">&nbsp;            if (transaction.getId() != null) {</b>
+<b class="nc">&nbsp;                log.error(&quot;Transaction ID should not be set for creation&quot;);</b>
+<b class="nc">&nbsp;                return ExecutionCode.INVALID_PARAMETER;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return ExecutionCode.SUCCESS;</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // 其它 context 统一校验
+<b class="pc">&nbsp;        if (transaction.getId() == null) {</b>
+<b class="nc">&nbsp;            log.error(&quot;Transaction ID is required for {}&quot;, context);</b>
+<b class="nc">&nbsp;            return ExecutionCode.INVALID_PARAMETER;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Transaction currentTransaction = transactionRepository.findById(transaction.getId()).orElse(null);</b>
+<b class="fc">&nbsp;        if (currentTransaction == null) {</b>
+<b class="fc">&nbsp;            log.error(&quot;Transaction with ID {} does not exist&quot;, transaction.getId());</b>
+<b class="fc">&nbsp;            return ExecutionCode.NOT_FOUND;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (Constants.TX_CONTEXT_UPDATE.equals(context)) {</b>
+<b class="fc">&nbsp;            ExecutionCode validator = validateTransactionProperties(transaction, userId);</b>
+<b class="pc">&nbsp;            if (ExecutionCode.SUCCESS.getCode() != validator.getCode()) {</b>
+<b class="nc">&nbsp;                log.error(&quot;Transaction properties validation failed: {}&quot;, validator.getMessage());</b>
+<b class="nc">&nbsp;                return validator;</b>
+&nbsp;            }
+<b class="pc">&nbsp;            if (!Constants.TX_STATUS_SUBMITTED.equals(currentTransaction.getStatus())</b>
+<b class="nc">&nbsp;                    &amp;&amp; !Constants.TX_STATUS_REJECTED.equals(currentTransaction.getStatus())) {</b>
+<b class="nc">&nbsp;                log.error(&quot;Transaction only SUBMITTED OR REJECTED status can {}&quot;, context);</b>
+<b class="nc">&nbsp;                return ExecutionCode.BUSINESS_ERROR;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return ExecutionCode.SUCCESS;</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (Constants.TX_CONTEXT_APPROVE.equals(context)</b>
+<b class="nc">&nbsp;                || Constants.TX_CONTEXT_REJECT.equals(context)</b>
+<b class="nc">&nbsp;                || Constants.TX_CONTEXT_CANCEL.equals(context)) {</b>
+<b class="fc">&nbsp;            if (!Constants.TX_STATUS_SUBMITTED.equals(currentTransaction.getStatus())) {</b>
+<b class="fc">&nbsp;                log.error(&quot;Transaction only SUBMITTED status can {}&quot;, context);</b>
+<b class="fc">&nbsp;                return ExecutionCode.BUSINESS_ERROR;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return ExecutionCode.SUCCESS;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        log.error(&quot;Unknown operation context: {}&quot;, context);</b>
+<b class="nc">&nbsp;        return ExecutionCode.BUSINESS_ERROR;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private ExecutionCode validateTransactionProperties(TransactionVO transaction, String userId) {
+<b class="pc">&nbsp;        if (transaction == null || userId == null || userId.isEmpty()) {</b>
+<b class="nc">&nbsp;            return ExecutionCode.INVALID_PARAMETER;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (transaction.getAmount() == null) {</b>
+<b class="fc">&nbsp;            return ExecutionCode.INVALID_PARAMETER.withProperty(&quot;amount&quot;);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (transaction.getTransactionDate() == null) {</b>
+<b class="nc">&nbsp;            return ExecutionCode.INVALID_PARAMETER.withProperty(&quot;transactionDate&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        String desc = transaction.getTransactionDescription();</b>
+<b class="pc">&nbsp;        if (desc == null || desc.isEmpty() || desc.trim().isEmpty() || desc.length() &gt; 150) {</b>
+<b class="nc">&nbsp;            return ExecutionCode.INVALID_PARAMETER.withProperty(&quot;transactionDescription&quot;);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (transaction.getDebitAccount() == null || transaction.getDebitAccount().isEmpty()) {</b>
+<b class="nc">&nbsp;            return ExecutionCode.INVALID_PARAMETER.withProperty(&quot;debitAccount&quot;);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (transaction.getCreditAccount() == null || transaction.getCreditAccount().isEmpty()) {</b>
+<b class="nc">&nbsp;            return ExecutionCode.INVALID_PARAMETER.withProperty(&quot;creditAccount&quot;);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (transaction.getCurrency() == null || transaction.getCurrency().isEmpty()) {</b>
+<b class="nc">&nbsp;            return ExecutionCode.INVALID_PARAMETER.withProperty(&quot;currency&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return ExecutionCode.SUCCESS;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Specification&lt;Transaction&gt; buildTransactionSearchSpecification(TransactionSearchVO vo) {
+<b class="fc">&nbsp;        return (Root&lt;Transaction&gt; root, CriteriaQuery&lt;?&gt; query, CriteriaBuilder cb) -&gt; {</b>
+<b class="nc">&nbsp;            Predicate predicate = cb.conjunction();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (vo.getId() != null) {</b>
+<b class="nc">&nbsp;                predicate = cb.and(predicate, cb.equal(root.get(&quot;id&quot;), vo.getId()));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (vo.getType() != null &amp;&amp; !vo.getType().isEmpty()) {</b>
+<b class="nc">&nbsp;                predicate = cb.and(predicate, cb.equal(root.get(&quot;type&quot;), vo.getType()));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (vo.getStatus() != null &amp;&amp; !vo.getStatus().isEmpty()) {</b>
+<b class="nc">&nbsp;                predicate = cb.and(predicate, cb.equal(root.get(&quot;status&quot;), vo.getStatus()));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (vo.getStartDate() != null) {</b>
+<b class="nc">&nbsp;                predicate = cb.and(predicate, cb.greaterThanOrEqualTo(root.get(&quot;transactionDate&quot;), vo.getStartDate()));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (vo.getEndDate() != null) {</b>
+<b class="nc">&nbsp;                predicate = cb.and(predicate, cb.lessThanOrEqualTo(root.get(&quot;transactionDate&quot;), vo.getEndDate()));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (vo.getTransactionDescription() != null &amp;&amp; !vo.getTransactionDescription().isEmpty()) {</b>
+<b class="nc">&nbsp;                predicate = cb.and(predicate, cb.like(root.get(&quot;transactionDescription&quot;), &quot;%&quot; + vo.getTransactionDescription() + &quot;%&quot;));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (vo.getSubmittedBy() != null &amp;&amp; !vo.getSubmittedBy().isEmpty()) {</b>
+<b class="nc">&nbsp;                predicate = cb.and(predicate, cb.equal(root.get(&quot;submittedBy&quot;), vo.getSubmittedBy()));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (vo.getApprovedBy() != null &amp;&amp; !vo.getApprovedBy().isEmpty()) {</b>
+<b class="nc">&nbsp;                predicate = cb.and(predicate, cb.equal(root.get(&quot;approvedBy&quot;), vo.getApprovedBy()));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return predicate;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean isValidColumn(String column) {
+&nbsp;        // Check if the column is a valid field in the Transaction entity
+&nbsp;        try {
+<b class="fc">&nbsp;            Transaction.class.getDeclaredField(column);</b>
+<b class="fc">&nbsp;            return true;</b>
+&nbsp;        } catch (NoSuchFieldException e) {
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-06-28 21:35</div>
+</div>
+</body>
+</html>
