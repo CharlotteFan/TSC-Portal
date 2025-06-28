@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsc-portal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tsc-portal
+  template:
+    metadata:
+      labels:
+        app: tsc-portal
+    spec:
+      containers:
+        - name: tsc-portal
+          image: your-docker-repo/tsc-portal:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tsc-portal-service
+spec:
+  type: ClusterIP
+  selector:
+    app: tsc-portal
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: tsc-portal-route
+spec:
+  to:
+    kind: Service
+    name: tsc-portal-service
+  port:
+    targetPort: 3000
+  tls:
+    termination: edge
