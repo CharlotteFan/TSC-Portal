@@ -19,10 +19,14 @@ TSC-Portal is a sample Spring Boot web service for transaction management in a b
 
 ## Main API Endpoints
 
-- `POST /transactions` — Create a transaction
-- `PUT /transactions/{id}` — Modify a transaction
-- `DELETE /transactions/{id}` — Delete a transaction
-- `GET /transactions` — List all transactions (with pagination)
+- `POST /transaction/create` — Create a transaction (`userId` required)
+- `PUT /transaction/update` — Update a transaction (`userId` required)
+- `POST /transaction/approve` — Approve a transaction (`userId` required)
+- `POST /transaction/reject` — Reject a transaction (`userId` required)
+- `POST /transaction/cancel` — Cancel a transaction (`userId` required)
+- `GET /transaction/{id}` — Get transaction by ID (`userId` required)
+- `DELETE /transaction/{id}` — Delete a transaction (`userId` required)
+- `POST /transaction/search` — Search transactions with pagination and filters
 
 Error handling is implemented for scenarios such as creating duplicate transactions or deleting non-existent transactions.
 
@@ -36,7 +40,7 @@ Error handling is implemented for scenarios such as creating duplicate transacti
 ### 1. Clone the Project
 
 ```bash
-git clone <repository-url>
+git clone <https://github.com/CharlotteFan/TSC-Portal.git/>
 cd TSC-Portal
 ```
 
@@ -55,10 +59,6 @@ docker run -p 8080:8080 tsc-portal
 ```
 
 ### 3. Access the API
-
-- API documentation (if Swagger is included): `/swagger-ui.html`
-
-### 4. Run Tests
 
 ```bash
 mvn test
