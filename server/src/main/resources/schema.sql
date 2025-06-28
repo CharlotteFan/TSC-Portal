@@ -16,12 +16,4 @@ CREATE TABLE transactions (
     approved_at DATETIME
 );
 
-DROP TABLE IF EXISTS users;
-CREATE TABLE users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id VARCHAR(50) NOT NULL UNIQUE,
-    first_name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255)
-);
 

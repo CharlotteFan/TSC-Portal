@@ -26,33 +26,33 @@ public class TransactionController {
     @PostMapping("/create")
     public ApiResponse<TransactionVO> createTransaction(@RequestBody TransactionVO transaction,
                                                       @RequestParam String userId) {
-        return ApiResponse.success(transactionService.updateTransaction(transaction, Constants.TX_CONTEXT_CREATE, userId));
+        return ApiResponse.success(transactionService.createTransaction(transaction, Constants.TX_CONTEXT_CREATE, userId));
     }
 
     @PutMapping("/update")
-    public ApiResponse<TransactionVO> updateTransaction(@RequestBody TransactionVO transaction,
+    public ApiResponse<Integer> updateTransaction(@RequestBody TransactionVO transaction,
                                                       @RequestParam String userId) {
-        return ApiResponse.success(transactionService.updateTransaction(transaction, Constants.TX_CONTEXT_UPDATE, userId));
+        return ApiResponse.success(transactionService.updateTransactionBasicInfo(transaction, Constants.TX_CONTEXT_UPDATE, userId));
     }
 
     @PostMapping("/approve")
-    public ApiResponse<TransactionVO> approveTransaction(@RequestBody TransactionVO transaction,
+    public ApiResponse<Integer> approveTransaction(@RequestBody TransactionVO transaction,
                                                        @RequestParam String userId) {
-        TransactionVO approved = transactionService.approveTransaction(transaction, Constants.TX_CONTEXT_APPROVE , userId);
+        Integer approved = transactionService.handleTransaction(transaction, Constants.TX_CONTEXT_APPROVE , userId);
         return ApiResponse.success(approved);
     }
 
     @PostMapping("/reject")
-    public ApiResponse<TransactionVO> rejectTransaction(@RequestBody TransactionVO transaction,
+    public ApiResponse<Integer> rejectTransaction(@RequestBody TransactionVO transaction,
                                                          @RequestParam String userId) {
-        TransactionVO approved = transactionService.approveTransaction(transaction, Constants.TX_CONTEXT_REJECT , userId);
+        Integer approved = transactionService.handleTransaction(transaction, Constants.TX_CONTEXT_REJECT , userId);
         return ApiResponse.success(approved);
     }
 
     @PostMapping("/cancel")
-    public ApiResponse<TransactionVO> cancelTransaction(@RequestBody TransactionVO transaction,
+    public ApiResponse<Integer> cancelTransaction(@RequestBody TransactionVO transaction,
                                                          @RequestParam String userId) {
-        TransactionVO approved = transactionService.approveTransaction(transaction, Constants.TX_CONTEXT_CANCEL , userId);
+        Integer approved = transactionService.handleTransaction(transaction, Constants.TX_CONTEXT_CANCEL , userId);
         return ApiResponse.success(approved);
     }
 

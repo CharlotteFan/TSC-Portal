@@ -7,13 +7,19 @@ import com.example.server.model.data.Transaction;
 import com.example.server.model.vo.TransactionVO;
 import com.example.server.repository.TransactionRepository;
 import com.example.server.util.Constants;
+import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,6 +37,7 @@ public class TransactionService {
     }
 
     @Transactional
+    @Cacheable(value = "transaction", key = "#transactionId")
     public TransactionVO getTransactionById(Long transactionId, String userId) {
         try {
             Transaction transaction = transactionRepository.findById(transactionId)
@@ -40,7 +47,7 @@ public class TransactionService {
             BeanUtils.copyProperties(transaction, transactionVO);
             log.info("Transaction detail of " + transactionId + " is retrieved successfully for user: " + userId);
             return transactionVO;
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Failed to retrieve transaction with id: {}", transactionId, e);
             throw e;
         }
@@ -58,22 +65,30 @@ public class TransactionService {
     }
 
     //to-do search transaction with criteria and pagination
-    //todo: cache the search results
     @Transactional
     public Page<Transaction> searchTransaction(TransactionSearchVO transactionSearchVO) {
-        Sort.Order order = new Sort.Order(Sort.Direction.DESC, "transactionId");
+        // build search criteria based on the TransactionSearchVO
+        Specification<Transaction> specification = buildTransactionSearchSpecification(transactionSearchVO);
 
+        String sortBy = transactionSearchVO.getSortBy();
+        Sort.Order order = Sort.Order.desc("id"); // Default sort order
+
+        if (sortBy == null || sortBy.isEmpty() || "id".equalsIgnoreCase(sortBy)) {
+            order = new Sort.Order(Sort.Direction.DESC, "id");
+        } else if (isValidColumn(sortBy)) {
+            order = new Sort.Order(Sort.Direction.DESC, sortBy);
+        }
         Pageable transactionPage = PageRequest.of(
                 transactionSearchVO.getPage(),
                 transactionSearchVO.getPageSize(),
                 Sort.by(order)
         );
-        return transactionRepository.findAll(transactionPage);
+        return transactionRepository.findAll(specification, transactionPage);
     }
 
-    //Todo
     @Transactional
-    public TransactionVO approveTransaction(TransactionVO transactionVO, String context, String userId) {
+    @CacheEvict(value = "transaction", key = "#transactionVO.id")
+    public Integer handleTransaction(TransactionVO transactionVO, String context, String userId) {
         // Validate the transaction before adding
         ExecutionCode validation = validateTransaction(transactionVO, context, userId);
         if (ExecutionCode.SUCCESS.getCode() != validation.getCode()) {
@@ -81,111 +96,118 @@ public class TransactionService {
             throw new BusinessException(validation);
         }
 
-        String status = transactionVO.getStatus();
-        // if the context is approve, then status will be set to APPROVED, if context is cancel or reject, then status will be set to CANCELLED or REJECTED
-        status = switch (context) {
+        String status = switch (context) {
             case Constants.TX_CONTEXT_APPROVE -> Constants.TX_STATUS_APPROVED;
             case Constants.TX_CONTEXT_CANCEL -> Constants.TX_STATUS_CANCELLED;
             case Constants.TX_CONTEXT_REJECT -> Constants.TX_STATUS_REJECTED;
-            default -> status; // 保持原状态
+            default -> {
+                log.error("Invalid context for transaction handling: {}", context);
+                throw new BusinessException(ExecutionCode.INVALID_PARAMETER);
+            }
         };
 
-        Transaction transaction = new Transaction();
-        BeanUtils.copyProperties(transactionVO, transaction);
-        transaction.setStatus(status);
-        transaction.setApprovedBy(userId);
-        transaction.setApprovedAt(LocalDateTime.now());
-
-        transaction.setLastUpdated( LocalDateTime.now());
-        Transaction saved = transactionRepository.save(transaction);
-
-        TransactionVO result = new TransactionVO();
-        BeanUtils.copyProperties(saved, result);
-        return result;
+        return transactionRepository.updateTransactionStatusById(transactionVO.getId(), status, LocalDateTime.now());
     }
 
     @Transactional
-    public TransactionVO updateTransaction(TransactionVO transactionVO, String context, String userId) {
+    public TransactionVO createTransaction(TransactionVO transactionVO, String context, String userId) {
         ExecutionCode validation = validateTransaction(transactionVO, context, userId);
-        if (ExecutionCode.SUCCESS.getCode() != validateTransaction(transactionVO, context, userId).getCode()) {
+        if (ExecutionCode.SUCCESS.getCode() != validation.getCode()) {
             log.error("Transaction validation failed for {} operation by user {}", context, userId);
             throw new BusinessException(validation);
         }
 
-        Transaction toUpdate = new Transaction();
-        BeanUtils.copyProperties(transactionVO, toUpdate);
+        Transaction toCreate = new Transaction();
+        BeanUtils.copyProperties(transactionVO, toCreate);
 
-        toUpdate.setLastUpdated(LocalDateTime.now());
-        toUpdate.setSubmittedBy(userId);
-        toUpdate.setSubmittedAt(LocalDateTime.now());
-        toUpdate.setStatus(Constants.TX_STATUS_SUBMITTED);
+        toCreate.setLastUpdated(LocalDateTime.now());
+        toCreate.setSubmittedBy(userId);
+        toCreate.setSubmittedAt(LocalDateTime.now());
+        toCreate.setStatus(Constants.TX_STATUS_SUBMITTED);
 
-        Transaction newTransaction = transactionRepository.save(toUpdate);
+        Transaction newTransaction = transactionRepository.save(toCreate);
 
-        TransactionVO updated = new TransactionVO();
-        BeanUtils.copyProperties(newTransaction, updated);
+        TransactionVO created = new TransactionVO();
+        BeanUtils.copyProperties(newTransaction, created);
 
         log.info("Transaction updated successfully by user: {}", userId);
-        return updated;
+        return created;
+    }
+
+    @Transactional
+    @CacheEvict(value = "transaction", key = "#transactionVO.id")
+    public Integer updateTransactionBasicInfo(TransactionVO transactionVO, String context, String userId) {
+        ExecutionCode validation = validateTransaction(transactionVO, context, userId);
+        if (ExecutionCode.SUCCESS.getCode() != validation.getCode()) {
+            log.error("Transaction validation failed for {} operation by user {}", context, userId);
+            throw new BusinessException(validation);
+        }
+
+        int updateNum = transactionRepository.updateTransactionBasicInfoById(transactionVO.getId(),
+                transactionVO.getType(), transactionVO.getAmount(), transactionVO.getTransactionDate(),
+                transactionVO.getTransactionDescription(), transactionVO.getDebitAccount(),
+                transactionVO.getCreditAccount(), transactionVO.getCurrency(), LocalDateTime.now());
+
+        log.info("Transaction updated successfully by user: {}", userId);
+        return updateNum;
     }
 
     private ExecutionCode validateTransaction(TransactionVO transaction, String context, String userId) {
-        ExecutionCode validator = ExecutionCode.SUCCESS;
-        // Perform validation logic here
-        validator = validateTransactionProperties(transaction, userId);
-
-        if (context != null && !context.isEmpty()) {
-            log.info("Operation context: {}", context);
-
-            switch (context) {
-                case Constants.TX_CONTEXT_CREATE:
-                    // Validate creation context
-                    if (transaction.getId() != null) {
-                        log.error("Transaction ID should not be set for creation");
-                        return ExecutionCode.INVALID_PARAMETER;
-                    }
-                    break;
-                case Constants.TX_CONTEXT_UPDATE:
-                    // Validate update context
-                    if (transaction.getId() == null) {
-                        log.error("Transaction ID is required for update");
-                        return ExecutionCode.INVALID_PARAMETER;
-                    }
-                    // Check if the transaction exists
-                    else if (!transactionRepository.existsById(transaction.getId())) {
-                        log.error("Transaction with ID {} does not exist", transaction.getId());
-                        return ExecutionCode.NOT_FOUND;
-                    }
-                    // Check if the tranaction is already cancelled or approved
-                    if (transaction.getStatus() != null &&
-                        (transaction.getStatus().equals(Constants.TX_STATUS_CANCELLED) ||
-                         transaction.getStatus().equals(Constants.TX_STATUS_APPROVED))) {
-                        log.error("Transaction cannot be updated if already cancelled or approved");
-                        return ExecutionCode.BUSINESS_ERROR;
-                    }
-                    break;
-                case Constants.TX_CONTEXT_APPROVE:
-                    // Validate approval context
-                    if (transaction.getStatus() == null || !transaction.getStatus().equals(Constants.TX_STATUS_SUBMITTED)) {
-                        log.error("Transaction must be in SUBMITTED status to approve");
-                        return ExecutionCode.BUSINESS_ERROR;
-                    }
-                    break;
-                case Constants.TX_CONTEXT_REJECT:
-                case Constants.TX_CONTEXT_CANCEL:
-                    // Validate rejection or cancellation context
-                    if (transaction.getStatus() == null || transaction.getStatus().equals(Constants.TX_STATUS_CANCELLED)) {
-                        log.error("Transaction cannot be cancelled or rejected if already cancelled");
-                        return ExecutionCode.BUSINESS_ERROR;
-                    }
-                    break;
-                default:
-                    log.error("Unknown operation context: {}", context);
-                    return ExecutionCode.BUSINESS_ERROR;
-            }
+        if (context == null || context.isEmpty()) {
+            log.error("Operation context is null or empty");
+            return ExecutionCode.INVALID_PARAMETER;
         }
 
-        return validator;
+        if (Constants.TX_CONTEXT_CREATE.equals(context)) {
+            ExecutionCode validator = validateTransactionProperties(transaction, userId);
+            if (ExecutionCode.SUCCESS.getCode() != validator.getCode()) {
+                log.error("Transaction properties validation failed: {}", validator.getMessage());
+                return validator;
+            }
+            if (transaction.getId() != null) {
+                log.error("Transaction ID should not be set for creation");
+                return ExecutionCode.INVALID_PARAMETER;
+            }
+            return ExecutionCode.SUCCESS;
+        }
+
+        // 其它 context 统一校验
+        if (transaction.getId() == null) {
+            log.error("Transaction ID is required for {}", context);
+            return ExecutionCode.INVALID_PARAMETER;
+        }
+        Transaction currentTransaction = transactionRepository.findById(transaction.getId()).orElse(null);
+        if (currentTransaction == null) {
+            log.error("Transaction with ID {} does not exist", transaction.getId());
+            return ExecutionCode.NOT_FOUND;
+        }
+
+        if (Constants.TX_CONTEXT_UPDATE.equals(context)) {
+            ExecutionCode validator = validateTransactionProperties(transaction, userId);
+            if (ExecutionCode.SUCCESS.getCode() != validator.getCode()) {
+                log.error("Transaction properties validation failed: {}", validator.getMessage());
+                return validator;
+            }
+            if (!Constants.TX_STATUS_SUBMITTED.equals(currentTransaction.getStatus())
+                    && !Constants.TX_STATUS_REJECTED.equals(currentTransaction.getStatus())) {
+                log.error("Transaction only SUBMITTED OR REJECTED status can {}", context);
+                return ExecutionCode.BUSINESS_ERROR;
+            }
+            return ExecutionCode.SUCCESS;
+        }
+
+        if (Constants.TX_CONTEXT_APPROVE.equals(context)
+                || Constants.TX_CONTEXT_REJECT.equals(context)
+                || Constants.TX_CONTEXT_CANCEL.equals(context)) {
+            if (!Constants.TX_STATUS_SUBMITTED.equals(currentTransaction.getStatus())) {
+                log.error("Transaction only SUBMITTED status can {}", context);
+                return ExecutionCode.BUSINESS_ERROR;
+            }
+            return ExecutionCode.SUCCESS;
+        }
+
+        log.error("Unknown operation context: {}", context);
+        return ExecutionCode.BUSINESS_ERROR;
     }
 
     private ExecutionCode validateTransactionProperties(TransactionVO transaction, String userId) {
@@ -208,7 +230,52 @@ public class TransactionService {
         if (transaction.getCreditAccount() == null || transaction.getCreditAccount().isEmpty()) {
             return ExecutionCode.INVALID_PARAMETER.withProperty("creditAccount");
         }
+        if (transaction.getCurrency() == null || transaction.getCurrency().isEmpty()) {
+            return ExecutionCode.INVALID_PARAMETER.withProperty("currency");
+        }
         return ExecutionCode.SUCCESS;
+    }
+
+    private Specification<Transaction> buildTransactionSearchSpecification(TransactionSearchVO vo) {
+        return (Root<Transaction> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            Predicate predicate = cb.conjunction();
+
+            if (vo.getId() != null) {
+                predicate = cb.and(predicate, cb.equal(root.get("id"), vo.getId()));
+            }
+            if (vo.getType() != null && !vo.getType().isEmpty()) {
+                predicate = cb.and(predicate, cb.equal(root.get("type"), vo.getType()));
+            }
+            if (vo.getStatus() != null && !vo.getStatus().isEmpty()) {
+                predicate = cb.and(predicate, cb.equal(root.get("status"), vo.getStatus()));
+            }
+            if (vo.getStartDate() != null) {
+                predicate = cb.and(predicate, cb.greaterThanOrEqualTo(root.get("transactionDate"), vo.getStartDate()));
+            }
+            if (vo.getEndDate() != null) {
+                predicate = cb.and(predicate, cb.lessThanOrEqualTo(root.get("transactionDate"), vo.getEndDate()));
+            }
+            if (vo.getTransactionDescription() != null && !vo.getTransactionDescription().isEmpty()) {
+                predicate = cb.and(predicate, cb.like(root.get("transactionDescription"), "%" + vo.getTransactionDescription() + "%"));
+            }
+            if (vo.getSubmittedBy() != null && !vo.getSubmittedBy().isEmpty()) {
+                predicate = cb.and(predicate, cb.equal(root.get("submittedBy"), vo.getSubmittedBy()));
+            }
+            if (vo.getApprovedBy() != null && !vo.getApprovedBy().isEmpty()) {
+                predicate = cb.and(predicate, cb.equal(root.get("approvedBy"), vo.getApprovedBy()));
+            }
+            return predicate;
+        };
+    }
+
+    private boolean isValidColumn(String column) {
+        // Check if the column is a valid field in the Transaction entity
+        try {
+            Transaction.class.getDeclaredField(column);
+            return true;
+        } catch (NoSuchFieldException e) {
+            return false;
+        }
     }
 
 }
