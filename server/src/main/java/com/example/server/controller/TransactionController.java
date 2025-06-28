@@ -38,7 +38,21 @@ public class TransactionController {
     @PostMapping("/approve")
     public ApiResponse<TransactionVO> approveTransaction(@RequestBody TransactionVO transaction,
                                                        @RequestParam String userId) {
-        TransactionVO approved = transactionService.updateTransaction(transaction, Constants.TX_CONTEXT_APPROVE , userId);
+        TransactionVO approved = transactionService.approveTransaction(transaction, Constants.TX_CONTEXT_APPROVE , userId);
+        return ApiResponse.success(approved);
+    }
+
+    @PostMapping("/reject")
+    public ApiResponse<TransactionVO> rejectTransaction(@RequestBody TransactionVO transaction,
+                                                         @RequestParam String userId) {
+        TransactionVO approved = transactionService.approveTransaction(transaction, Constants.TX_CONTEXT_REJECT , userId);
+        return ApiResponse.success(approved);
+    }
+
+    @PostMapping("/cancel")
+    public ApiResponse<TransactionVO> cancelTransaction(@RequestBody TransactionVO transaction,
+                                                         @RequestParam String userId) {
+        TransactionVO approved = transactionService.approveTransaction(transaction, Constants.TX_CONTEXT_CANCEL , userId);
         return ApiResponse.success(approved);
     }
 

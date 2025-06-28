@@ -11,4 +11,11 @@ public class Constants {
     public static final String TX_CONTEXT_CREATE = "CREATE";
     public static final String TX_CONTEXT_UPDATE = "UPDATE";
     public static final String TX_CONTEXT_APPROVE = "APPROVE";
+    public  static final String TX_CONTEXT_REJECT = "REJECT";
+    public static final String TX_CONTEXT_CANCEL = "CANCEL";
+
+    public static final String TX_STATUS_SUBMITTED = "SUBMITTED";
+    public static final String TX_STATUS_APPROVED = "APPROVED";
+    public static final String TX_STATUS_REJECTED = "REJECTED";
+    public static final String TX_STATUS_CANCELLED = "CANCELLED";
 }

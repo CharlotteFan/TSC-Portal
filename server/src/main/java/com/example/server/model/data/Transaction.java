@@ -24,7 +24,7 @@ public class Transaction {
     private BigDecimal amount;
 
     @Column(name = "transaction_date")
-    private LocalDate transactionDate;
+    private LocalDateTime transactionDate;
 
     @Column(name = "transaction_description", length = 255)
     private String transactionDescription;

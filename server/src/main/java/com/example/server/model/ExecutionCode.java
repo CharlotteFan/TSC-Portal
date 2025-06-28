@@ -1,6 +1,7 @@
 package com.example.server.model;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public enum ExecutionCode {
@@ -14,12 +15,16 @@ public enum ExecutionCode {
     SUCCESS(200, "Success"),;
 
 
-
     private final int code;
-    private final String message;
+    private String message;
 
     ExecutionCode(int code, String message) {
         this.code = code;
         this.message = message;
+    }
+
+    public ExecutionCode withProperty(String property) {
+        this.message = this.message + " - " + property;
+        return this;
     }
 }

@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -12,15 +14,15 @@ public class TransactionVO {
     private Long id;
     private String type;
     private BigDecimal amount;
-    private String transactionDate;
+    private LocalDateTime transactionDate;
     private String transactionDescription;
     private String debitAccount;
     private String creditAccount;
     private String status;
-    private String lastUpdated;
+    private LocalDateTime lastUpdated;
     private String currency;
-    private Long submittedBy;
-    private String submittedAt;
-    private Long approvedBy;
-    private String approvedAt;
+    private String submittedBy;
+    private LocalDateTime submittedAt;
+    private String approvedBy;
+    private LocalDateTime approvedAt;
 }
